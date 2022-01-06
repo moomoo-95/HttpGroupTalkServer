@@ -1,5 +1,7 @@
 package service;
 
+import network.definition.NetAddress;
+import network.socket.SocketProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +15,10 @@ public class ServiceManager {
     private static final int RECV_BUF = 1048576;
 
     private static ServiceManager serviceManager = null;
+
+    // NetAddress 생성
+    private final NetAddress clientAddress = new NetAddress(HOST, 5000,true, SocketProtocol.TCP);
+    private final NetAddress serverAddress = new NetAddress(HOST, 6000,true, SocketProtocol.TCP);
 
     private boolean isQuit = false;
 

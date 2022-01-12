@@ -20,6 +20,13 @@
     </properties>
 
     <dependencies>
+        <!-- timestamp -->
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.7</version>
+        </dependency>
+
         <!-- netty -->
         <dependency>
             <groupId>io.netty</groupId>
@@ -60,6 +67,7 @@
             <version>3.11</version>
         </dependency>
 
+        <!-- java_network_base_framework submodule -->
         <dependency>
             <groupId>network.framework</groupId>
             <artifactId>framework</artifactId>
@@ -67,7 +75,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- java_network_base_framework submodule -->
 
         <!--        <dependency>-->
         <!--            <groupId>commons-net</groupId>-->

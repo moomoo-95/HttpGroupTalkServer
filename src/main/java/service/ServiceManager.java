@@ -4,6 +4,7 @@ import network.definition.NetAddress;
 import network.socket.SocketProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import protocol.hgtp.HgtpManager;
 
 public class ServiceManager {
     private static final Logger log = LoggerFactory.getLogger(ServiceManager.class);
@@ -15,6 +16,8 @@ public class ServiceManager {
     private static final int RECV_BUF = 1048576;
 
     private static ServiceManager serviceManager = null;
+
+    private HgtpManager hgtpManager;
 
     // NetAddress 생성
     private final NetAddress clientAddress = new NetAddress(HOST, 5000,true, SocketProtocol.TCP);
@@ -53,10 +56,15 @@ public class ServiceManager {
             this.stop();
         }));
 
+        // HgtpManager
+        hgtpManager = HgtpManager.getInstance();
+        hgtpManager.startHgtp();
+
         return true;
     }
 
     public void stop() {
-        // nothing
+        hgtpManager.stopHgtp();
+
     }
 }

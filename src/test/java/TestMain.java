@@ -2,7 +2,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.hgtp.server.protocol.hgtp.HgtpTest;
-import com.hgtp.server.util.CnameGenerator;
+import moomoo.hgtp.server.util.CnameGenerator;
 
 import java.nio.charset.StandardCharsets;
 

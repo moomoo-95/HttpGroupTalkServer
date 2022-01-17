@@ -1,6 +1,11 @@
 package moomoo.hgtp.server.protocol.hgtp.message.request.handler;
 
 
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.nio.NioDatagramChannel;
+import moomoo.hgtp.server.network.NetworkManager;
+import moomoo.hgtp.server.network.handler.HgtpChannelHandler;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpHeader;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpMessageType;
 import moomoo.hgtp.server.protocol.hgtp.message.base.content.HgtpRegisterContent;
@@ -8,8 +13,13 @@ import moomoo.hgtp.server.protocol.hgtp.message.request.*;
 import moomoo.hgtp.server.protocol.hgtp.message.response.HgtpCommonResponse;
 import moomoo.hgtp.server.protocol.hgtp.message.response.HgtpUnauthorizedResponse;
 import moomoo.hgtp.server.service.AppInstance;
+import moomoo.hgtp.server.session.SessionManager;
+import moomoo.hgtp.server.session.base.UserInfo;
+import network.definition.DestinationRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 public class HgtpRequestHandler {
 
@@ -32,6 +42,29 @@ public class HgtpRequestHandler {
             HgtpUnauthorizedResponse hgtpUnauthorizedResponse = new HgtpUnauthorizedResponse(
                     AppInstance.MAGIC_COOKIE, HgtpMessageType.UNAUTHORIZED, hgtpHeader.getRequestType(),
                     hgtpHeader.getUserId(), hgtpHeader.getSeqNumber() + AppInstance.SEQ_INCREMENT, appInstance.getTimeStamp(), AppInstance.MD5_REALM);
+
+            UserInfo userInfo = SessionManager.getInstance().addUserInfo(
+                    hgtpHeader.getUserId(), hgtpRegisterContent.getListenIp() , hgtpRegisterContent.getListenPort(), hgtpRegisterContent.getExpires()
+            );
+
+            NetworkManager.getInstance().getHgtpGroupSocket().addDestination(userInfo.getUserNetAddress(), null, 2L,
+                    new ChannelInitializer<NioDatagramChannel>() {
+                        @Override
+                        protected void initChannel(NioDatagramChannel datagramChannel) {
+                            final ChannelPipeline channelPipeline = datagramChannel.pipeline();
+                            channelPipeline.addLast(new HgtpChannelHandler());
+                        }
+                    });
+
+            DestinationRecord destinationRecord = NetworkManager.getInstance().getHgtpGroupSocket().getDestination(2L);
+            if (destinationRecord == null) {
+                log.warn("({}) () () DestinationRecord Channel is null.", userInfo.getUserId());
+            }
+
+            byte[] data = hgtpUnauthorizedResponse.getByteData();
+            destinationRecord.getNettyChannel().sendData(data, data.length);
+            log.debug("({}) () () [{}] SEND DATA {}", userInfo.getUserId(), HgtpMessageType.RESPONSE_HASHMAP.get(HgtpMessageType.UNAUTHORIZED), hgtpUnauthorizedResponse);
+
 
             return true; // todo send HgtpUnauthorizedResponse
         } else {

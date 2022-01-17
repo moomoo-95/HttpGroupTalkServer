@@ -2,6 +2,7 @@ package moomoo.hgtp.server.service;
 
 import moomoo.hgtp.server.network.NetworkManager;
 import moomoo.hgtp.server.protocol.hgtp.HgtpManager;
+import moomoo.hgtp.server.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,8 @@ public class ServiceManager {
         // NetworkManager
         networkManager = NetworkManager.getInstance();
         networkManager.startSocket();
+
+        SessionManager.getInstance();
 
         return true;
     }

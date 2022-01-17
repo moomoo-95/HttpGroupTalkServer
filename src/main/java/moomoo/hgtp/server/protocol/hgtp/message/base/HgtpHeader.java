@@ -1,7 +1,7 @@
 package moomoo.hgtp.server.protocol.hgtp.message.base;
 
-import moomoo.hgtp.server.config.ConfigManager;
 import moomoo.hgtp.server.protocol.hgtp.exception.HgtpException;
+import moomoo.hgtp.server.service.AppInstance;
 import util.module.ByteUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 public class HgtpHeader {
 
     public static final int HGTP_HEADER_SIZE = 24;
-    public static final short MAGIC_COOKIE = 0x4853; // HS
 
     private final short magicCookie;                // 2 bytes
     private final short messageType;                // 1 bytes
@@ -47,7 +46,7 @@ public class HgtpHeader {
             this.magicCookie = ByteUtil.bytesToShort(magicCookieByteData, true);
             index += magicCookieByteData.length;
 
-            if (magicCookie != MAGIC_COOKIE) {
+            if (magicCookie != AppInstance.MAGIC_COOKIE) {
                 messageType = HgtpMessageType.UNKNOWN;
                 requestType = HgtpMessageType.UNKNOWN;
                 userId = "";
@@ -64,7 +63,7 @@ public class HgtpHeader {
             this.requestType = ByteUtil.bytesToShort(new byte[]{0x0, mtToRtByteData[1]}, true);
             index += mtToRtByteData.length;
 
-            byte[] userIdByteData = new byte[ConfigManager.USER_ID_SIZE];
+            byte[] userIdByteData = new byte[AppInstance.USER_ID_SIZE];
             System.arraycopy(data, index, userIdByteData, 0, userIdByteData.length);
             this.userId = new String(userIdByteData, StandardCharsets.UTF_8);
             index += userIdByteData.length;

@@ -1,6 +1,6 @@
 package moomoo.hgtp.server.protocol.hgtp.message.base.content;
 
-import moomoo.hgtp.server.config.ConfigManager;
+import moomoo.hgtp.server.service.AppInstance;
 
 import java.nio.charset.StandardCharsets;
 
@@ -36,7 +36,7 @@ public class HgtpRoomContent implements HgtpContent {
     }
 
     public int getBodyLength() {
-        return ConfigManager.ROOM_ID_SIZE;
+        return AppInstance.ROOM_ID_SIZE;
     }
 
     public String getRoomId() {

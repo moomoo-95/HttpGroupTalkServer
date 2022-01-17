@@ -4,15 +4,16 @@ import moomoo.hgtp.server.protocol.hgtp.exception.HgtpException;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpHeader;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpMessage;
 import moomoo.hgtp.server.protocol.hgtp.message.base.content.HgtpRoomContent;
+import moomoo.hgtp.server.service.AppInstance;
 
 
 public class HgtpJoinRoomRequest extends HgtpMessage {
 
     private final HgtpHeader hgtpHeader;
-    private final HgtpRoomContent hgtpContext;
+    private final HgtpRoomContent hgtpContent;
 
     public HgtpJoinRoomRequest(byte[] data) throws HgtpException {
-        if (data.length >= HgtpHeader.HGTP_HEADER_SIZE + 12) {
+        if (data.length >= HgtpHeader.HGTP_HEADER_SIZE + AppInstance.ROOM_ID_SIZE) {
             int index = 0;
 
             byte[] headerByteData = new byte[HgtpHeader.HGTP_HEADER_SIZE];
@@ -22,10 +23,10 @@ public class HgtpJoinRoomRequest extends HgtpMessage {
 
             byte[] contextByteData = new byte[hgtpHeader.getBodyLength()];
             System.arraycopy(data, index, contextByteData, 0, contextByteData.length);
-            this.hgtpContext = new HgtpRoomContent(contextByteData);
+            this.hgtpContent = new HgtpRoomContent(contextByteData);
         } else {
             this.hgtpHeader = null;
-            this.hgtpContext = null;
+            this.hgtpContent = null;
         }
     }
 
@@ -33,7 +34,7 @@ public class HgtpJoinRoomRequest extends HgtpMessage {
         int bodyLength = 12;
 
         this.hgtpHeader = new HgtpHeader(magicCookie, messageType, messageType, userId, seqNumber, timeStamp, bodyLength);
-        this.hgtpContext = new HgtpRoomContent(roomId);
+        this.hgtpContent = new HgtpRoomContent(roomId);
     }
 
     @Override
@@ -45,7 +46,7 @@ public class HgtpJoinRoomRequest extends HgtpMessage {
         System.arraycopy(headerByteData, 0, data, index, headerByteData.length);
         index += headerByteData.length;
 
-        byte[] contextByteData = this.hgtpContext.getByteData();
+        byte[] contextByteData = this.hgtpContent.getByteData();
         System.arraycopy(contextByteData, 0, data, index, contextByteData.length);
 
         return data;
@@ -53,5 +54,5 @@ public class HgtpJoinRoomRequest extends HgtpMessage {
 
     public HgtpHeader getHgtpHeader() {return hgtpHeader;}
 
-    public HgtpRoomContent getHgtpContext() {return hgtpContext;}
+    public HgtpRoomContent getHgtpContent() {return hgtpContent;}
 }

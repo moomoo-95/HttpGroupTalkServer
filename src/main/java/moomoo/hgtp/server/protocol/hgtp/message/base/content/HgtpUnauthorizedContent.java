@@ -1,6 +1,5 @@
 package moomoo.hgtp.server.protocol.hgtp.message.base.content;
 
-
 import util.module.ByteUtil;
 
 import java.nio.charset.StandardCharsets;

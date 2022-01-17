@@ -3,11 +3,9 @@ package moomoo.hgtp.server.protocol.hgtp;
 import moomoo.hgtp.server.protocol.hgtp.exception.HgtpException;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpHeader;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpMessageType;
-import com.hgtp.server.protocol.hgtp.message.request.*;
 import moomoo.hgtp.server.protocol.hgtp.message.request.*;
 import moomoo.hgtp.server.protocol.hgtp.message.request.handler.HgtpRequestHandler;
 import moomoo.hgtp.server.protocol.hgtp.message.response.HgtpCommonResponse;
-import moomoo.hgtp.server.protocol.hgtp.message.response.HgtpUnauthorizedResponse;
 import moomoo.hgtp.server.protocol.hgtp.message.response.handler.HgtpResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +42,10 @@ public class HgtpConsumer implements Runnable {
     public void parseHgtpMessage(byte[] data) {
         try {
             HgtpHeader hgtpHeader = new HgtpHeader(data);
+            if (hgtpHeader == null) {
+                log.warn("This is not HGTP Message. [{}]", data);
+                return;
+            }
 
             log.debug("({}) () () RECV MSG TYPE : {}", hgtpHeader.getUserId(), hgtpHeader.getMessageType());
             switch (hgtpHeader.getMessageType()){
@@ -86,10 +88,6 @@ public class HgtpConsumer implements Runnable {
                 case HgtpMessageType.BAD_REQUEST:
                     HgtpCommonResponse hgtpBadRequestResponse = new HgtpCommonResponse(data);
                     HgtpResponseHandler.badRequestResponseProcessing(hgtpBadRequestResponse);
-                    break;
-                case HgtpMessageType.UNAUTHORIZED:
-                    HgtpUnauthorizedResponse hgtpUnauthorizedResponse = new HgtpUnauthorizedResponse(data);
-                    HgtpResponseHandler.unauthorizedResponseProcessing(hgtpUnauthorizedResponse);
                     break;
                 case HgtpMessageType.FORBIDDEN:
                     HgtpCommonResponse hgtpForbiddenResponse = new HgtpCommonResponse(data);

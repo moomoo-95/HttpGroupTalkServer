@@ -1,8 +1,10 @@
+import moomoo.hgtp.client.protocol.hgtp.HgtpManager;
+import moomoo.hgtp.client.service.AppInstance;
+import moomoo.hgtp.client.util.CnameGenerator;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.hgtp.server.protocol.hgtp.HgtpTest;
-import moomoo.hgtp.server.util.CnameGenerator;
+import protocol.hgtp.HgtpTest;
 
 import java.nio.charset.StandardCharsets;
 
@@ -10,6 +12,11 @@ public class TestMain {
     private static final Logger log = LoggerFactory.getLogger(TestMain.class);
     @Test
     public void testMain() {
+        AppInstance appInstance = AppInstance.getInstance();
+        appInstance.setConfigManager("src/main/resources/config/user_config.ini");
+        HgtpManager hgtpManager = HgtpManager.getInstance();
+        hgtpManager.startHgtp();
+
         String userId = CnameGenerator.generateCnameUserId();
         String roomId = CnameGenerator.generateCnameRoomId();
         String userId2 = CnameGenerator.generateCnameUserId();
@@ -19,10 +26,15 @@ public class TestMain {
         HgtpTest hgtpTest = new HgtpTest();
         log.debug("-------------------- Register --------------------");
         hgtpTest.hgtpRegisterTest(userId);
+        hgtpTest.hgtpRegisterTest(userId2);
         log.debug("-------------------- Create room --------------------");
         hgtpTest.hgtpCreateRoomTest(userId, roomId);
         log.debug("-------------------- Join room --------------------");
         hgtpTest.hgtpJoinRoomTest(userId, roomId);
+        log.debug("-------------------- Invite user from room --------------------");
+        hgtpTest.hgtpInviteUserFromRoomTest(userId, roomId, userId2);
+        log.debug("-------------------- Remove user from room --------------------");
+        hgtpTest.hgtpRemoveUserFromRoomTest(userId, roomId, userId2);
         log.debug("-------------------- Exit room --------------------");
         hgtpTest.hgtpExitRoomTest(userId, roomId);
         log.debug("-------------------- Delete room --------------------");
@@ -31,7 +43,7 @@ public class TestMain {
 
         hgtpTest.hgtpUnregisterTest(userId);
 
-
+        hgtpManager.stopHgtp();
     }
 
 }

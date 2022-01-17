@@ -4,15 +4,16 @@ import moomoo.hgtp.server.protocol.hgtp.exception.HgtpException;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpHeader;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpMessage;
 import moomoo.hgtp.server.protocol.hgtp.message.base.content.HgtpRoomManagerContent;
+import moomoo.hgtp.server.service.AppInstance;
 
 
 public class HgtpInviteUserFromRoomRequest extends HgtpMessage {
 
     private final HgtpHeader hgtpHeader;
-    private final HgtpRoomManagerContent hgtpContext;
+    private final HgtpRoomManagerContent hgtpContent;
 
     public HgtpInviteUserFromRoomRequest(byte[] data) throws HgtpException {
-        if (data.length >= HgtpHeader.HGTP_HEADER_SIZE + 12) {
+        if (data.length >= HgtpHeader.HGTP_HEADER_SIZE + AppInstance.ROOM_ID_SIZE + AppInstance.USER_ID_SIZE) {
             int index = 0;
 
             byte[] headerByteData = new byte[HgtpHeader.HGTP_HEADER_SIZE];
@@ -22,10 +23,10 @@ public class HgtpInviteUserFromRoomRequest extends HgtpMessage {
 
             byte[] contextByteData = new byte[hgtpHeader.getBodyLength()];
             System.arraycopy(data, index, contextByteData, 0, contextByteData.length);
-            this.hgtpContext = new HgtpRoomManagerContent(contextByteData);
+            this.hgtpContent = new HgtpRoomManagerContent(contextByteData);
         } else {
             this.hgtpHeader = null;
-            this.hgtpContext = null;
+            this.hgtpContent = null;
         }
     }
 
@@ -33,7 +34,7 @@ public class HgtpInviteUserFromRoomRequest extends HgtpMessage {
         int bodyLength = 12 + 8;
 
         this.hgtpHeader = new HgtpHeader(magicCookie, messageType, messageType, userId, seqNumber, timeStamp, bodyLength);
-        this.hgtpContext = new HgtpRoomManagerContent(roomId, peerUserId);
+        this.hgtpContent = new HgtpRoomManagerContent(roomId, peerUserId);
     }
 
     @Override
@@ -45,7 +46,7 @@ public class HgtpInviteUserFromRoomRequest extends HgtpMessage {
         System.arraycopy(headerByteData, 0, data, index, headerByteData.length);
         index += headerByteData.length;
 
-        byte[] contextByteData = this.hgtpContext.getByteData();
+        byte[] contextByteData = this.hgtpContent.getByteData();
         System.arraycopy(contextByteData, 0, data, index, contextByteData.length);
 
         return data;
@@ -53,5 +54,5 @@ public class HgtpInviteUserFromRoomRequest extends HgtpMessage {
 
     public HgtpHeader getHgtpHeader() {return hgtpHeader;}
 
-    public HgtpRoomManagerContent getHgtpContext() {return hgtpContext;}
+    public HgtpRoomManagerContent getHgtpContent() {return hgtpContent;}
 }

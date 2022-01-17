@@ -1,31 +1,23 @@
 package moomoo.hgtp.server.service;
 
+import moomoo.hgtp.server.network.NetworkManager;
 import moomoo.hgtp.server.protocol.hgtp.HgtpManager;
-import network.definition.NetAddress;
-import network.socket.SocketProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ServiceManager {
     private static final Logger log = LoggerFactory.getLogger(ServiceManager.class);
-    private static final String HOST = "192.168.2.163";
     private static final int DELAY_TIME = 1000;
-    private static final int MIN_PORT = 5000;
-    private static final int MAX_PORT = 7000;
-    private static final int SEND_BUF = 1048576;
-    private static final int RECV_BUF = 1048576;
 
     private static ServiceManager serviceManager = null;
 
     private HgtpManager hgtpManager;
-
-    // NetAddress 생성
-    private final NetAddress clientAddress = new NetAddress(HOST, 5000,true, SocketProtocol.TCP);
-    private final NetAddress serverAddress = new NetAddress(HOST, 6000,true, SocketProtocol.TCP);
+    private NetworkManager networkManager;
 
     private boolean isQuit = false;
 
     public ServiceManager() {
+        // nothing
     }
 
     public static ServiceManager getInstance() {
@@ -60,11 +52,16 @@ public class ServiceManager {
         hgtpManager = HgtpManager.getInstance();
         hgtpManager.startHgtp();
 
+        // NetworkManager
+        networkManager = NetworkManager.getInstance();
+        networkManager.startSocket();
+
         return true;
     }
 
     public void stop() {
         hgtpManager.stopHgtp();
+        networkManager.stopSocket();
 
     }
 }

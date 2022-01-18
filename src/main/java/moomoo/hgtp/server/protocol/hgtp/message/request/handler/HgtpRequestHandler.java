@@ -1,11 +1,5 @@
 package moomoo.hgtp.server.protocol.hgtp.message.request.handler;
 
-
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.socket.nio.NioDatagramChannel;
-import moomoo.hgtp.server.network.NetworkManager;
-import moomoo.hgtp.server.network.handler.HgtpChannelHandler;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpHeader;
 import moomoo.hgtp.server.protocol.hgtp.message.base.HgtpMessageType;
 import moomoo.hgtp.server.protocol.hgtp.message.base.content.HgtpRegisterContent;
@@ -123,7 +117,7 @@ public class HgtpRequestHandler {
 
 
         if (sessionManager.getUserInfo(userId) == null) {
-            log.debug("{} UserInfo is unregister", userId, roomId);
+            log.debug("{} UserInfo is unregister", userId);
             return;
         }
 
@@ -154,9 +148,49 @@ public class HgtpRequestHandler {
         }
     }
 
-    public boolean deleteRoomRequestProcessing(HgtpDeleteRoomRequest hgtpDeleteRoomRequest) {
-        log.debug(LOG_FORMAT, hgtpDeleteRoomRequest.getHgtpHeader().getUserId(), hgtpDeleteRoomRequest);
-        return true;
+    public void deleteRoomRequestProcessing(HgtpDeleteRoomRequest hgtpDeleteRoomRequest) {
+        HgtpHeader hgtpHeader = hgtpDeleteRoomRequest.getHgtpHeader();
+        HgtpRoomContent hgtpRoomContent = hgtpDeleteRoomRequest.getHgtpContent();
+
+        String roomId = hgtpRoomContent.getRoomId();
+        String userId = hgtpHeader.getUserId();
+
+        log.debug(LOG_FORMAT, userId, hgtpDeleteRoomRequest);
+
+
+        if (sessionManager.getUserInfo(userId) == null) {
+            log.debug("{} UserInfo is unregister", userId);
+        }
+
+
+        short messageType;
+        if (roomId.equals("")) {
+            messageType = HgtpMessageType.BAD_REQUEST;
+            log.debug("({}) ({}) () RoomId is null", userId, roomId);
+        } else {
+            RoomInfo roomInfo = sessionManager.getRoomInfo(roomId);
+
+            if (roomInfo == null) {
+                messageType = HgtpMessageType.BAD_REQUEST;
+                log.debug("({}) ({}) () RoomInfo already deleted.", userId, roomId);
+            } else if (!roomInfo.getManagerId().equals(userId)) {
+                messageType = HgtpMessageType.BAD_REQUEST;
+                log.debug("({}) ({}) () UserInfo is not room manager.", userId, roomId);
+            } else {
+                // 최대 roomInfo 초과
+                messageType = HgtpMessageType.OK;
+                log.debug("({}) ({}) () RoomInfo was delete.", userId, roomId);
+            }
+        }
+
+        HgtpCommonResponse hgtpCommonResponse = new HgtpCommonResponse(
+                AppInstance.MAGIC_COOKIE, messageType, hgtpHeader.getRequestType(),
+                userId, hgtpHeader.getSeqNumber() + AppInstance.SEQ_INCREMENT, appInstance.getTimeStamp());
+
+        hgtpResponseHandler.sendCommonResponse(hgtpCommonResponse);
+        if (messageType == HgtpMessageType.OK) {
+            sessionManager.deleteRoomInfo(roomId);
+        }
     }
 
     public boolean joinRoomRequestProcessing(HgtpJoinRoomRequest hgtpJoinRoomRequest) {

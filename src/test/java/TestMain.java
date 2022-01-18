@@ -1,6 +1,8 @@
 
 import moomoo.hgtp.server.protocol.hgtp.HgtpManager;
 import moomoo.hgtp.server.service.AppInstance;
+import moomoo.hgtp.server.session.SessionManager;
+import moomoo.hgtp.server.session.base.UserInfo;
 import moomoo.hgtp.server.util.CnameGenerator;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -45,6 +47,14 @@ public class TestMain {
         hgtpTest.hgtpUnregisterTest(userId);
 
         hgtpManager.stopHgtp();
+
+//        for (int idx = 0; idx < 10000000 ; idx++ ) {
+//            UserInfo userInfo = SessionManager.getInstance().addUserInfo(
+//                    CnameGenerator.generateCnameUserId(), "127.0.0.1", (short) 5060, 3600
+//            );
+//        }
+//
+////        log.debug("!!! {}", userInfo.toString());
     }
 
 }

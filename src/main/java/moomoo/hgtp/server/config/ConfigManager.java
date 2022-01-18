@@ -19,6 +19,9 @@ public class ConfigManager {
     private static final String SECTION_HTTP = "HTTP";
 
     // Field
+    // COMMON
+    private static final String FIELD_USER_MAX_SIZE = "USER_MAX_SIZE";
+    private static final String FIELD_ROOM_MAX_SIZE = "ROOM_MAX_SIZE";
     // NETWORK
     private static final String FIELD_LOCAL_LISTEN_IP = "LOCAL_LISTEN_IP";
     private static final String FIELD_SEND_BUF_SIZE = "SEND_BUF_SIZE";
@@ -32,6 +35,8 @@ public class ConfigManager {
     private static final String FIELD_HTTP_MAX_PORT = "HTTP_MAX_PORT";
 
     // COMMON
+    private int userMaxSize = 0;
+    private int roomMaxSize = 0;
     // NETWORK
     private String localListenIp = "";
     private int  sendBufSize = 0;
@@ -64,7 +69,18 @@ public class ConfigManager {
     }
 
     private void loadCommonConfig() {
-        // nothing
+        this.userMaxSize = Integer.parseInt(getIniValue(SECTION_COMMON, FIELD_USER_MAX_SIZE));
+        if (userMaxSize < 0 || userMaxSize > 1000000) {
+            log.warn("[{}] config [{}] : [{} -> 100] Warn", SECTION_COMMON, FIELD_USER_MAX_SIZE, userMaxSize);
+            userMaxSize = 100;
+        }
+
+        this.roomMaxSize = Integer.parseInt(getIniValue(SECTION_COMMON, FIELD_ROOM_MAX_SIZE));
+        if (roomMaxSize < 0 || roomMaxSize > 1000000) {
+            log.warn("[{}] config [{}] : [{} -> 100] Warn", SECTION_COMMON, FIELD_ROOM_MAX_SIZE, roomMaxSize);
+            roomMaxSize = 100;
+        }
+
         log.debug("Load [{}] config...(OK)", SECTION_COMMON);
     }
 
@@ -153,14 +169,21 @@ public class ConfigManager {
         }
     }
 
+    // common
+    public int getUserMaxSize() {return userMaxSize;}
+
+    public int getRoomMaxSize() {return roomMaxSize;}
+
+    // network
     public String getLocalListenIp() {return localListenIp;}
     public int getSendBufSize() {return sendBufSize;}
     public int getRecvBufSize() {return recvBufSize;}
 
-
+    // hgtp
     public short getHgtpListenPort() {return hgtpListenPort;}
     public int getHgtpThreadSize() {return hgtpThreadSize;}
 
+    // http
     public short getHttpListenPort() {return httpListenPort;}
     public int getHttpMinPort() {return httpMinPort;}
     public int getHttpMaxPort() {return httpMaxPort;}

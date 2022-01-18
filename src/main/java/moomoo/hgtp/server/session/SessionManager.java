@@ -44,8 +44,16 @@ public class SessionManager {
         }
     }
 
+    public int getUserInfoSize() {
+        return userInfoHashMap.size();
+    }
+
     public UserInfo getUserInfo(String userId) {
-        return userInfoHashMap.get(userId);
+        if ( userInfoHashMap.containsKey(userId) ) {
+            return userInfoHashMap.get(userId);
+        } else {
+            return null;
+        }
     }
 
 }

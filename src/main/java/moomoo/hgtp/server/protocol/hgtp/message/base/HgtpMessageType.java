@@ -26,6 +26,7 @@ public class HgtpMessageType {
         // nothing
     }
 
+
     public static final Map<Short, String> REQUEST_HASHMAP = new HashMap<Short, String>() { {
             put(REGISTER, "REGISTER");
             put(UNREGISTER, "UNREGISTER");
@@ -44,5 +45,10 @@ public class HgtpMessageType {
         put(FORBIDDEN, "FORBIDDEN");
         put(SERVER_UNAVAILABLE, "SERVER_UNAVAILABLE");
         put(DECLINE, "DECLINE");
+    } };
+
+    public static final Map<Short, String> HGTP_HASHMAP = new HashMap<Short, String>() { {
+        putAll(REQUEST_HASHMAP);
+        putAll(RESPONSE_HASHMAP);
     } };
 }

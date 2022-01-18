@@ -1,8 +1,14 @@
 package moomoo.hgtp.server.session;
 
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.nio.NioDatagramChannel;
+import moomoo.hgtp.server.network.NetworkManager;
+import moomoo.hgtp.server.network.handler.HgtpChannelHandler;
 import moomoo.hgtp.server.session.base.RoomInfo;
 import moomoo.hgtp.server.session.base.UserInfo;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionManager {
@@ -11,6 +17,14 @@ public class SessionManager {
 
     private final ConcurrentHashMap<String, UserInfo> userInfoHashMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, RoomInfo> roomInfoHashMap = new ConcurrentHashMap<>();
+
+    private ChannelInitializer<NioDatagramChannel> channelInitializer = new ChannelInitializer<NioDatagramChannel>() {
+        @Override
+        protected void initChannel(NioDatagramChannel datagramChannel) {
+            final ChannelPipeline channelPipeline = datagramChannel.pipeline();
+            channelPipeline.addLast(new HgtpChannelHandler());
+        }
+    };
 
     public SessionManager() {
         // nothing
@@ -32,13 +46,18 @@ public class SessionManager {
         synchronized (userInfoHashMap) {
             userInfoHashMap.put(userId, userInfo);
         }
+        NetworkManager.getInstance().getHgtpGroupSocket().addDestination(userInfo.getUserNetAddress(), null, userInfo.getSessionId(), channelInitializer);
         return  userInfo;
     }
 
     public void deleteUserInfo(String userId) {
         if (userInfoHashMap.containsKey(userId)) {
+            UserInfo userInfo = null;
             synchronized (userInfoHashMap) {
-                userInfoHashMap.remove(userId);
+                userInfo = userInfoHashMap.remove(userId);
+            }
+            if (userInfo != null) {
+                NetworkManager.getInstance().getHgtpGroupSocket().removeDestination(userInfo.getSessionId());
             }
         }
     }
@@ -84,4 +103,7 @@ public class SessionManager {
         }
     }
 
+    public Map<String, UserInfo> getUserInfoHashMap() {
+        return userInfoHashMap;
+    }
 }

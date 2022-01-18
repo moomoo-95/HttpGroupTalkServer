@@ -1,6 +1,7 @@
 package moomoo.hgtp.server.service.scheduler;
 
 import moomoo.hgtp.server.service.scheduler.base.ScheduleUnit;
+import moomoo.hgtp.server.service.scheduler.handler.SessionChecker;
 import moomoo.hgtp.server.service.scheduler.handler.SessionMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class ScheduleManager {
 
     private void init() {
         addSchedule(SessionMonitor.class.getSimpleName(), new SessionMonitor(SCHEDULE_INTERVAL));
+        addSchedule(SessionChecker.class.getSimpleName(), new SessionChecker(SCHEDULE_INTERVAL*2));
     }
 
     public void start() {

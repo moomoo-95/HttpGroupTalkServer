@@ -15,6 +15,7 @@ public class UserInfo {
     private final long expireTime;
     private final long createTime;
 
+    private boolean isRegister = false;
     private String roomId = "";
 
     public UserInfo(String userId, String listenIp, short listenPort, long expireTime) {
@@ -41,6 +42,9 @@ public class UserInfo {
     }
 
     public long getCreateTime() {return createTime;}
+
+    public boolean isRegister() {return isRegister;}
+    public void setRegister() {isRegister = true;}
 
     public String getRoomId() {
         return roomId;

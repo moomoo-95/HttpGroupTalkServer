@@ -12,4 +12,10 @@ public class RoomInfo {
         this.managerId = managerId;
         this.createTime = System.currentTimeMillis();
     }
+
+    public String getRooId() {return rooId;}
+
+    public String getManagerId() {return managerId;}
+
+    public long getCreateTime() {return createTime;}
 }

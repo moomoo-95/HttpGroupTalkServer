@@ -99,11 +99,37 @@ public class HgtpRequestHandler {
         }
     }
 
-    public boolean unregisterRequestProcessing(HgtpUnregisterRequest hgtpUnregisterRequest) {
+    public void unregisterRequestProcessing(HgtpUnregisterRequest hgtpUnregisterRequest) {
         HgtpHeader hgtpHeader = hgtpUnregisterRequest.getHgtpHeader();
-        log.debug(LOG_FORMAT, hgtpHeader.getUserId(), hgtpUnregisterRequest);
 
-        return true;
+        String userId = hgtpHeader.getUserId();
+
+        log.debug(LOG_FORMAT, userId, hgtpUnregisterRequest);
+
+        UserInfo userInfo = sessionManager.getUserInfo(userId);
+        if (userInfo == null) {
+            log.debug("{} UserInfo is unregister", userId);
+            return;
+        }
+
+        short messageType = HgtpMessageType.UNKNOWN;
+        if (sessionManager.getRoomInfo(userInfo.getRoomId()) != null) {
+            // userInfo 가 아직 roomInfo 에 존재
+            messageType = HgtpMessageType.BAD_REQUEST;
+            log.debug("({}) () () UserInfo already exist.", userId);
+        } else {
+            messageType = HgtpMessageType.OK;
+        }
+
+        HgtpCommonResponse hgtpCommonResponse = new HgtpCommonResponse(
+                AppInstance.MAGIC_COOKIE, messageType, hgtpHeader.getRequestType(),
+                userId, hgtpHeader.getSeqNumber() + AppInstance.SEQ_INCREMENT, appInstance.getTimeStamp());
+
+        hgtpResponseHandler.sendCommonResponse(hgtpCommonResponse);
+
+        if (messageType == HgtpMessageType.OK) {
+            sessionManager.deleteUserInfo(userId);
+        }
     }
 
     public void createRoomRequestProcessing(HgtpCreateRoomRequest hgtpCreateRoomRequest) {

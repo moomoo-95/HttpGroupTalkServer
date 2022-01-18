@@ -20,6 +20,13 @@
     </properties>
 
     <dependencies>
+        <!-- FSM -->
+        <dependency>
+            <groupId>umediafsm</groupId>
+            <artifactId>umediafsm</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
         <!-- timestamp -->
         <dependency>
             <groupId>commons-net</groupId>

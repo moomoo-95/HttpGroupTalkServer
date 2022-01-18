@@ -12,30 +12,32 @@ import moomoo.hgtp.server.protocol.hgtp.message.base.content.HgtpRegisterContent
 import moomoo.hgtp.server.protocol.hgtp.message.request.*;
 import moomoo.hgtp.server.protocol.hgtp.message.response.HgtpCommonResponse;
 import moomoo.hgtp.server.protocol.hgtp.message.response.HgtpUnauthorizedResponse;
+import moomoo.hgtp.server.protocol.hgtp.message.response.handler.HgtpResponseHandler;
 import moomoo.hgtp.server.service.AppInstance;
 import moomoo.hgtp.server.session.SessionManager;
 import moomoo.hgtp.server.session.base.UserInfo;
-import network.definition.DestinationRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 public class HgtpRequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(HgtpRequestHandler.class);
+    private static final String LOG_FORMAT = "({}) () () RECV HGTP MSG [{}]";
 
     private static AppInstance appInstance = AppInstance.getInstance();
+
+    private final HgtpResponseHandler hgtpResponseHandler = new HgtpResponseHandler();
+
+    private SessionManager sessionManager = SessionManager.getInstance();
 
     public HgtpRequestHandler() {
         // nothing
     }
 
-    // only server
-    public static boolean registerRequestProcessing(HgtpRegisterRequest hgtpRegisterRequest) {
+    public void registerRequestProcessing(HgtpRegisterRequest hgtpRegisterRequest) {
         HgtpHeader hgtpHeader = hgtpRegisterRequest.getHgtpHeader();
         HgtpRegisterContent hgtpRegisterContent = hgtpRegisterRequest.getHgtpContent();
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpHeader.getUserId(), hgtpRegisterRequest);
+        log.debug(LOG_FORMAT, hgtpHeader.getUserId(), hgtpRegisterRequest);
 
         // 첫 번째 Register Request
         if (hgtpRegisterContent.getNonce().equals("")) {
@@ -43,11 +45,21 @@ public class HgtpRequestHandler {
                     AppInstance.MAGIC_COOKIE, HgtpMessageType.UNAUTHORIZED, hgtpHeader.getRequestType(),
                     hgtpHeader.getUserId(), hgtpHeader.getSeqNumber() + AppInstance.SEQ_INCREMENT, appInstance.getTimeStamp(), AppInstance.MD5_REALM);
 
-            UserInfo userInfo = SessionManager.getInstance().addUserInfo(
+            UserInfo userInfo = sessionManager.addUserInfo(
                     hgtpHeader.getUserId(), hgtpRegisterContent.getListenIp() , hgtpRegisterContent.getListenPort(), hgtpRegisterContent.getExpires()
             );
 
-            NetworkManager.getInstance().getHgtpGroupSocket().addDestination(userInfo.getUserNetAddress(), null, 2L,
+            if (userInfo == null) {
+                log.debug("({}) () () UserInfo already exist.", hgtpHeader.getUserId());
+                HgtpCommonResponse hgtpCommonResponse = new HgtpCommonResponse(
+                        AppInstance.MAGIC_COOKIE, HgtpMessageType.BAD_REQUEST, hgtpHeader.getRequestType(),
+                        hgtpHeader.getUserId(), hgtpHeader.getSeqNumber() + AppInstance.SEQ_INCREMENT, appInstance.getTimeStamp());
+
+                hgtpResponseHandler.sendCommonResponse(hgtpCommonResponse);
+                return;
+            }
+
+            NetworkManager.getInstance().getHgtpGroupSocket().addDestination(userInfo.getUserNetAddress(), null, userInfo.getSessionId(),
                     new ChannelInitializer<NioDatagramChannel>() {
                         @Override
                         protected void initChannel(NioDatagramChannel datagramChannel) {
@@ -56,21 +68,11 @@ public class HgtpRequestHandler {
                         }
                     });
 
-            DestinationRecord destinationRecord = NetworkManager.getInstance().getHgtpGroupSocket().getDestination(2L);
-            if (destinationRecord == null) {
-                log.warn("({}) () () DestinationRecord Channel is null.", userInfo.getUserId());
-            }
-
-            byte[] data = hgtpUnauthorizedResponse.getByteData();
-            destinationRecord.getNettyChannel().sendData(data, data.length);
-            log.debug("({}) () () [{}] SEND DATA {}", userInfo.getUserId(), HgtpMessageType.RESPONSE_HASHMAP.get(HgtpMessageType.UNAUTHORIZED), hgtpUnauthorizedResponse);
-
-
-            return true; // todo send HgtpUnauthorizedResponse
+            hgtpResponseHandler.sendUnauthorizedResponse(hgtpUnauthorizedResponse);
         } else {
             short messageType;
             if (hgtpRegisterContent.getNonce().equals(appInstance.getServerNonce())) {
-                if (false) { // todo 최대 유저 초과할 경우
+                if (sessionManager.getUserInfoSize() > appInstance.getConfigManager().getUserMaxSize()) {
                     messageType = HgtpMessageType.SERVER_UNAVAILABLE;
                 } else {
                     messageType = HgtpMessageType.OK;
@@ -82,44 +84,45 @@ public class HgtpRequestHandler {
             HgtpCommonResponse hgtpCommonResponse = new HgtpCommonResponse(
                     AppInstance.MAGIC_COOKIE, messageType, hgtpHeader.getRequestType(),
                     hgtpHeader.getUserId(), hgtpHeader.getSeqNumber() + AppInstance.SEQ_INCREMENT, appInstance.getTimeStamp());
-            return true; // todo send hgtpCommonResponse
+
+            hgtpResponseHandler.sendCommonResponse(hgtpCommonResponse);
         }
     }
 
-    public static boolean unregisterRequestProcessing(HgtpUnregisterRequest hgtpUnregisterRequest) {
+    public boolean unregisterRequestProcessing(HgtpUnregisterRequest hgtpUnregisterRequest) {
         HgtpHeader hgtpHeader = hgtpUnregisterRequest.getHgtpHeader();
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpHeader.getUserId(), hgtpUnregisterRequest);
+        log.debug(LOG_FORMAT, hgtpHeader.getUserId(), hgtpUnregisterRequest);
 
         return true;
     }
 
-    public static boolean createRoomRequestProcessing(HgtpCreateRoomRequest hgtpCreateRoomRequest) {
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpCreateRoomRequest.getHgtpHeader().getUserId(), hgtpCreateRoomRequest);
+    public boolean createRoomRequestProcessing(HgtpCreateRoomRequest hgtpCreateRoomRequest) {
+        log.debug(LOG_FORMAT, hgtpCreateRoomRequest.getHgtpHeader().getUserId(), hgtpCreateRoomRequest);
         return true;
     }
 
-    public static boolean deleteRoomRequestProcessing(HgtpDeleteRoomRequest hgtpDeleteRoomRequest) {
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpDeleteRoomRequest.getHgtpHeader().getUserId(), hgtpDeleteRoomRequest);
+    public boolean deleteRoomRequestProcessing(HgtpDeleteRoomRequest hgtpDeleteRoomRequest) {
+        log.debug(LOG_FORMAT, hgtpDeleteRoomRequest.getHgtpHeader().getUserId(), hgtpDeleteRoomRequest);
         return true;
     }
 
-    public static boolean joinRoomRequestProcessing(HgtpJoinRoomRequest hgtpJoinRoomRequest) {
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpJoinRoomRequest.getHgtpHeader().getUserId(), hgtpJoinRoomRequest);
+    public boolean joinRoomRequestProcessing(HgtpJoinRoomRequest hgtpJoinRoomRequest) {
+        log.debug(LOG_FORMAT, hgtpJoinRoomRequest.getHgtpHeader().getUserId(), hgtpJoinRoomRequest);
         return true;
     }
 
-    public static boolean exitRoomRequestProcessing(HgtpExitRoomRequest hgtpExitRoomRequest) {
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpExitRoomRequest.getHgtpHeader().getUserId(), hgtpExitRoomRequest);
+    public boolean exitRoomRequestProcessing(HgtpExitRoomRequest hgtpExitRoomRequest) {
+        log.debug(LOG_FORMAT, hgtpExitRoomRequest.getHgtpHeader().getUserId(), hgtpExitRoomRequest);
         return true;
     }
 
-    public static boolean inviteUserFromRoomRequestProcessing(HgtpInviteUserFromRoomRequest hgtpInviteUserFromRoomRequest) {
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpInviteUserFromRoomRequest.getHgtpHeader().getUserId(), hgtpInviteUserFromRoomRequest);
+    public boolean inviteUserFromRoomRequestProcessing(HgtpInviteUserFromRoomRequest hgtpInviteUserFromRoomRequest) {
+        log.debug(LOG_FORMAT, hgtpInviteUserFromRoomRequest.getHgtpHeader().getUserId(), hgtpInviteUserFromRoomRequest);
         return true;
     }
 
-    public static boolean removeUserFromRoomRequestProcessing(HgtpRemoveUserFromRoomRequest hgtpRemoveUserFromRoomRequest) {
-        log.debug("({}) () () RECV HGTP MSG [{}]", hgtpRemoveUserFromRoomRequest.getHgtpHeader().getUserId(), hgtpRemoveUserFromRoomRequest);
+    public boolean removeUserFromRoomRequestProcessing(HgtpRemoveUserFromRoomRequest hgtpRemoveUserFromRoomRequest) {
+        log.debug(LOG_FORMAT, hgtpRemoveUserFromRoomRequest.getHgtpHeader().getUserId(), hgtpRemoveUserFromRoomRequest);
         return true;
     }
 

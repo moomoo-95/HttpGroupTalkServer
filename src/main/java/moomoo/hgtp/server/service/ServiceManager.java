@@ -2,6 +2,7 @@ package moomoo.hgtp.server.service;
 
 import moomoo.hgtp.server.network.NetworkManager;
 import moomoo.hgtp.server.protocol.hgtp.HgtpManager;
+import moomoo.hgtp.server.service.scheduler.ScheduleManager;
 import moomoo.hgtp.server.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ public class ServiceManager {
 
     private HgtpManager hgtpManager;
     private NetworkManager networkManager;
+    private ScheduleManager scheduleManager;
 
     private boolean isQuit = false;
 
@@ -59,12 +61,15 @@ public class ServiceManager {
 
         SessionManager.getInstance();
 
+        scheduleManager = ScheduleManager.getInstance();
+        scheduleManager.start();
+
         return true;
     }
 
     public void stop() {
         hgtpManager.stopHgtp();
         networkManager.stopSocket();
-
+        scheduleManager.stop();
     }
 }
